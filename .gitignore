@@ -1,0 +1,6 @@
+*.xcworkspace
+Content/
+Intermediate/
+Binaries/
+.vs/
+*.sln
