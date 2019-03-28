@@ -11,6 +11,12 @@ ATopDownShmupPlayerController::ATopDownShmupPlayerController()
 	DefaultMouseCursor = EMouseCursor::Crosshairs;
 }
 
+//void APawnWithCamera::BeginPlay()
+//{
+//    Super::BeginPlay();
+//    Pawn = GetPawn();
+//}
+
 void ATopDownShmupPlayerController::PlayerTick(float DeltaTime)
 {
 	Super::PlayerTick(DeltaTime);
@@ -18,8 +24,9 @@ void ATopDownShmupPlayerController::PlayerTick(float DeltaTime)
 	// keep updating the destination every tick while desired
 	if (bMoveToMouseCursor)
 	{
-		MoveToMouseCursor();
+		//MoveToMouseCursor();
 	}
+    UpdateMouseLook();
 }
 
 void ATopDownShmupPlayerController::SetupInputComponent()
@@ -29,10 +36,11 @@ void ATopDownShmupPlayerController::SetupInputComponent()
 
 	InputComponent->BindAction("SetDestination", IE_Pressed, this, &ATopDownShmupPlayerController::OnSetDestinationPressed);
 	InputComponent->BindAction("SetDestination", IE_Released, this, &ATopDownShmupPlayerController::OnSetDestinationReleased);
+    
+    // support touch devices
+    InputComponent->BindTouch(EInputEvent::IE_Pressed, this, &ATopDownShmupPlayerController::MoveToTouchLocation);
+    InputComponent->BindTouch(EInputEvent::IE_Repeat, this, &ATopDownShmupPlayerController::MoveToTouchLocation);
 
-	// support touch devices 
-	InputComponent->BindTouch(EInputEvent::IE_Pressed, this, &ATopDownShmupPlayerController::MoveToTouchLocation);
-	InputComponent->BindTouch(EInputEvent::IE_Repeat, this, &ATopDownShmupPlayerController::MoveToTouchLocation);
 }
 
 void ATopDownShmupPlayerController::MoveToMouseCursor()
@@ -91,4 +99,23 @@ void ATopDownShmupPlayerController::OnSetDestinationReleased()
 {
 	// clear flag to indicate we should stop updating the destination
 	bMoveToMouseCursor = false;
+}
+
+void ATopDownShmupPlayerController::UpdateMouseLook()
+{
+    // Trace to see what is under the mouse cursor
+    FHitResult Hit;
+    GetHitResultUnderCursor(ECC_Visibility, false, Hit);
+    
+    if (Hit.bBlockingHit)
+    {
+        // We hit something, move there
+        APawn* const Pawn = GetPawn();
+
+        
+        FVector facingDirection = Hit.ImpactPoint - Pawn->GetActorLocation();
+        facingDirection.Z = 0;
+        facingDirection = facingDirection.GetSafeNormal();
+        Pawn->SetActorRotation(facingDirection.Rotation());
+    }
 }
